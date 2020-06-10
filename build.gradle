@@ -1,0 +1,53 @@
+plugins {
+    id 'java'
+    id 'org.jetbrains.intellij' version '0.4.21'
+    id 'org.jetbrains.grammarkit' version '2020.2.1'
+}
+
+group 'org.nixos.idea'
+version '0.2.1.0'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    testImplementation group: 'junit', name: 'junit', version: '4.12'
+}
+
+// See https://github.com/JetBrains/gradle-intellij-plugin/
+intellij {
+    version '2020.1.1'
+}
+
+sourceSets {
+    main {
+        java.srcDirs += 'src/gen/java'
+    }
+}
+
+apply plugin: 'org.jetbrains.grammarkit'
+
+import org.jetbrains.grammarkit.tasks.GenerateLexer
+import org.jetbrains.grammarkit.tasks.GenerateParser
+
+task generateNixLexer(type: GenerateLexer) {
+    source 'src/main/lang/Nix.flex'
+    skeleton 'src/main/lang/idea-flex.skeleton'
+    targetDir 'src/gen/java/org/nixos/idea/lang/'
+    targetClass 'NixLexer'
+    purgeOldFiles true
+}
+
+task generateNixParser(type: GenerateParser) {
+    source 'src/main/lang/Nix.bnf'
+    targetRoot 'src/gen/java'
+    pathToParser 'org/nixos/idea/lang/NixParser.java'
+    pathToPsiRoot 'org/nixos/idea/psi'
+    purgeOldFiles true
+}
+
+compileJava {
+    dependsOn generateNixLexer
+    dependsOn generateNixParser
+}
